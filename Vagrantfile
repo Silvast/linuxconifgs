@@ -9,10 +9,10 @@ Vagrant.configure("2") do |config|
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
-
+  config.vm.box = "ajxb/mint-19.0"
+  config.vm.box_version = "1.0.2"
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "npalm/mint17-amd64-cinnamon"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -72,8 +72,14 @@ Vagrant.configure("2") do |config|
      
      apt-get install -y git
      apt-get install -y vim
-     apt-get install curl
-
+     apt-get install -y curl
+     apt-get install -y ssh 
+     
+    #leiningen
+     wget --quiet https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+     cp lein /usr/local/bin/
+     chmod a+x /usr/local/bin/lein
+    
      #java8
 	add-apt-repository -y ppa:webupd8team/java
 	apt update
@@ -82,10 +88,13 @@ Vagrant.configure("2") do |config|
 	echo debconf shared/accepted-oracle-license-v1-1 seen true |  debconf-set-selections	
 	apt install -y oracle-java8-installer
 
-    #leiningen
-     wget --quiet https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
-     cp lein /usr/local/bin/
-     chmod a+x /usr/local/bin/lein
-     sed -ie '/^XKBLAYOUT=/s/".*"/"fi"/' /etc/default/keyboard && udevadm trigger --subsystem-match=input --action=change		
+   #docker stuff 
+    apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(. /etc/os-release; echo "$UBUNTU_CODENAME") stable"
+    agt-get update
+    apt-get -y  install docker-ce docker-compose
+    usermod -aG docker $USER
+
    SHELL
 end
