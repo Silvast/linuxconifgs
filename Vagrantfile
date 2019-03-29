@@ -64,6 +64,8 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
    config.vm.provision "shell", inline: <<-SHELL
+     rm /etc/apt/sources.list.d/additional-repositories.list
+     touch /etc/apt/sources.list.d/additional-repositories.list
      add-apt-repository ppa:webupd8team/atom
      apt-get update
      add-apt-repository ppa:webupd8team/atom -y
@@ -74,8 +76,16 @@ Vagrant.configure("2") do |config|
      apt-get install -y vim
      apt-get install -y curl
      apt-get install -y ssh 
-     
-    #leiningen
+     apt-get install -y terminix
+     apt-get install -y zsh
+     apt-get install -y powerline fonts-powerline
+     apt-get install -y zsh-theme-powerlevel9k 
+     echo "source /usr/share/powerlevel9k/powerlevel9k.zsh-theme" >> ~/.zshrc
+     apt-get install -y zsh-syntax-highlighting
+     echo "source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ~/.zshrc
+
+
+ #leiningen
      wget --quiet https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
      cp lein /usr/local/bin/
      chmod a+x /usr/local/bin/lein
