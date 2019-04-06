@@ -84,7 +84,8 @@ Vagrant.configure("2") do |config|
      apt-get install -y zsh-syntax-highlighting
      echo "source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ~/.zshrc
 
-
+    apt-get install -y nodejs
+    apt-get install -y npm
  #leiningen
      wget --quiet https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
      cp lein /usr/local/bin/
