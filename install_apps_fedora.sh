@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # ── colours ────────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -47,8 +47,8 @@ section "PostgreSQL"
 if ! sudo postgresql-setup --initdb 2>/dev/null; then
   warn "PostgreSQL initdb skipped (already initialised?)"
 fi
-sudo systemctl enable --now postgresql
-info "PostgreSQL enabled and started."
+sudo systemctl enable --now postgresql || warn "Failed to start PostgreSQL."
+info "PostgreSQL setup done."
 
 # ── 3. SDKMAN + Java (adoptium temurin LTS) ───────────────────────────────────
 section "SDKMAN"
@@ -122,13 +122,13 @@ info "Copilot CLI installed."
 
 # ── 10. Slack (snap) ──────────────────────────────────────────────────────────
 section "Slack"
-sudo systemctl enable --now snapd.socket
+sudo systemctl enable --now snapd.socket || warn "Failed to enable snapd."
 # SELinux symlink needed on Fedora
 if [[ ! -L /snap ]]; then
   sudo ln -sf /var/lib/snapd/snap /snap
 fi
 warn "A reboot (or re-login) may be required before snap works on Fedora."
-sudo snap install slack --classic
+sudo snap install slack --classic || warn "Slack snap install failed — try again after reboot."
 
 # ── 11. Chrome ────────────────────────────────────────────────────────────────
 section "Google Chrome"
@@ -143,7 +143,7 @@ info "Chrome installed."
 # ── 12. Postman ───────────────────────────────────────────────────────────────
 section "Postman"
 if ! command_exists postman; then
-  sudo snap install postman
+  sudo snap install postman || warn "Postman snap install failed — try again after reboot."
 fi
 info "Postman installed."
 
