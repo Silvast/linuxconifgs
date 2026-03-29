@@ -31,6 +31,7 @@ brew install \
   python@3 \
   sqlite \
   postgresql@17 \
+  neovim ripgrep fd lazygit \
   gcc make
 
 # ── 3. PostgreSQL: start service ─────────────────────────────────────────────
@@ -130,6 +131,18 @@ if ! brew list --cask postman &>/dev/null; then
   brew install --cask postman
 fi
 info "Postman installed."
+
+# ── LazyVim ──────────────────────────────────────────────────────────────────
+section "LazyVim"
+if [[ ! -d "$HOME/.config/nvim/.git" ]] || \
+   ! grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
+  for d in "$HOME/.config/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"; do
+    [[ -d "$d" ]] && mv "$d" "${d}.bak.$(date +%s)"
+  done
+  git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+  rm -rf "$HOME/.config/nvim/.git"
+fi
+info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 
 # ── PATH additions to shell rc ───────────────────────────────────────────────
 section "Shell profile updates"

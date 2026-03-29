@@ -35,6 +35,7 @@ sudo dnf install -y \
   python3 python3-pip \
   sqlite \
   postgresql postgresql-server postgresql-contrib \
+  neovim ripgrep fd-find lazygit \
   gcc gcc-c++ make \
   snapd \
   dnf-plugins-core
@@ -143,6 +144,19 @@ if ! command_exists postman; then
   sudo snap install postman
 fi
 info "Postman installed."
+
+# ── LazyVim ──────────────────────────────────────────────────────────────────
+section "LazyVim"
+# Back up existing Neovim config, then clone the LazyVim starter
+if [[ ! -d "$HOME/.config/nvim/.git" ]] || \
+   ! grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
+  for d in "$HOME/.config/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"; do
+    [[ -d "$d" ]] && mv "$d" "${d}.bak.$(date +%s)"
+  done
+  git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+  rm -rf "$HOME/.config/nvim/.git"
+fi
+info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 
 # ── PATH additions to shell rc ────────────────────────────────────────────────
 section "Shell profile updates"
