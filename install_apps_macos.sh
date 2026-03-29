@@ -31,8 +31,10 @@ brew install \
   python@3 \
   sqlite \
   postgresql@17 \
-  neovim ripgrep fd lazygit \
+  vim neovim ripgrep fd lazygit \
   gcc make
+
+brew install --cask kitty
 
 # ── 3. PostgreSQL: start service ─────────────────────────────────────────────
 section "PostgreSQL"

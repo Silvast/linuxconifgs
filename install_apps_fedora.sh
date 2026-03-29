@@ -28,6 +28,7 @@ sudo dnf install -y \
   python3 python3-pip \
   sqlite \
   postgresql postgresql-server postgresql-contrib \
+  vim kitty \
   neovim ripgrep fd-find lazygit \
   gcc gcc-c++ make \
   snapd \
