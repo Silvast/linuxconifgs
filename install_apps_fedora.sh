@@ -42,6 +42,20 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
 fi
 info "Oh My Zsh installed."
 
+# Install zsh-syntax-highlighting plugin (third-party)
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
+    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+fi
+info "zsh-syntax-highlighting plugin installed."
+
+# Set oh-my-zsh plugins in .zshrc
+ZSHRC="$HOME/.zshrc"
+if [[ -f "$ZSHRC" ]]; then
+  sed -i 's/^plugins=(.*/plugins=(git zsh-history-substring-search zsh-syntax-highlighting)/' "$ZSHRC"
+fi
+
 # ── 2. PostgreSQL: initialise if needed ────────────────────────────────────────
 section "PostgreSQL"
 if ! sudo postgresql-setup --initdb 2>/dev/null; then
