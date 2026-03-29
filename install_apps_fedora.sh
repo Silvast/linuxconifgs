@@ -35,8 +35,9 @@ sudo dnf install -y \
 
 # ── Oh My Zsh ────────────────────────────────────────────────────────────────
 section "Oh My Zsh"
+hash -r  # refresh command lookup after dnf install
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  ZSH= sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 fi
 info "Oh My Zsh installed."
 
