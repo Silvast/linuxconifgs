@@ -18,13 +18,6 @@ trap 'kill $SUDO_KEEPER_PID 2>/dev/null' EXIT
 # ── helpers ────────────────────────────────────────────────────────────────────
 command_exists() { command -v "$1" &>/dev/null; }
 
-# ── Oh My Zsh ────────────────────────────────────────────────────────────────
-section "Oh My Zsh"
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
-info "Oh My Zsh installed."
-
 # ── 1. System packages (one dnf call) ──────────────────────────────────────────
 section "System packages via dnf"
 sudo dnf install -y \
@@ -39,6 +32,13 @@ sudo dnf install -y \
   gcc gcc-c++ make \
   snapd \
   dnf-plugins-core
+
+# ── Oh My Zsh ────────────────────────────────────────────────────────────────
+section "Oh My Zsh"
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+info "Oh My Zsh installed."
 
 # ── 2. PostgreSQL: initialise if needed ────────────────────────────────────────
 section "PostgreSQL"
