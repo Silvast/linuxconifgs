@@ -17,38 +17,96 @@ trap 'kill $SUDO_KEEPER_PID 2>/dev/null' EXIT
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 command_exists() { command -v "$1" &>/dev/null; }
+rpm_installed()  { rpm -q "$1" &>/dev/null; }
+snap_installed() { snap list "$1" &>/dev/null 2>&1; }
 
-# ── 1. System packages (one dnf call) ──────────────────────────────────────────
+# ── 1. System packages (dnf — install only missing) ───────────────────────────
 section "System packages via dnf"
-sudo dnf install -y \
-  zsh \
-  git curl wget unzip zip tar \
-  java-21-openjdk java-21-openjdk-devel \
-  kotlin \
-  python3 python3-pip \
-  sqlite \
-  postgresql postgresql-server postgresql-contrib \
-  vim kitty \
-  neovim ripgrep fd-find lazygit \
-  gcc gcc-c++ make \
-  snapd \
+DNF_PACKAGES=(
+  zsh
+  git curl wget unzip zip tar
+  java-21-openjdk java-21-openjdk-devel
+  kotlin
+  python3 python3-pip
+  sqlite
+  postgresql postgresql-server postgresql-contrib
+  vim kitty
+  neovim ripgrep fd-find lazygit
+  gcc gcc-c++ make
+  snapd
   dnf-plugins-core
+)
+
+MISSING=()
+for pkg in "${DNF_PACKAGES[@]}"; do
+  if rpm_installed "$pkg"; then
+    info "Already installed: $pkg — skipping"
+  else
+    MISSING+=("$pkg")
+  fi
+done
+
+if (( ${#MISSING[@]} > 0 )); then
+  info "Installing: ${MISSING[*]}"
+  sudo dnf install -y "${MISSING[@]}"
+else
+  info "All system packages already installed."
+fi
 
 # ── Oh My Zsh ────────────────────────────────────────────────────────────────
 section "Oh My Zsh"
 hash -r  # refresh command lookup after dnf install
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
   ZSH= sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  info "Oh My Zsh installed."
+else
+  info "Oh My Zsh already installed — skipping."
 fi
-info "Oh My Zsh installed."
 
 # Install zsh-syntax-highlighting plugin (third-party)
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
     "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+  info "zsh-syntax-highlighting plugin installed."
+else
+  info "zsh-syntax-highlighting already installed — skipping."
 fi
-info "zsh-syntax-highlighting plugin installed."
+
+# Install zsh-history-substring-search plugin (third-party)
+if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-history-substring-search" ]]; then
+  git clone https://github.com/zsh-users/zsh-history-substring-search.git \
+    "$ZSH_CUSTOM/plugins/zsh-history-substring-search"
+  info "zsh-history-substring-search plugin installed."
+else
+  info "zsh-history-substring-search already installed — skipping."
+fi
+
+# ── Nerd Font ────────────────────────────────────────────────────────────────
+section "Nerd Font (JetBrains Mono)"
+FONT_DIR="$HOME/.local/share/fonts"
+if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
+  mkdir -p "$FONT_DIR"
+  NF_VERSION=$(curl -s https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest \
+    | grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
+  curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/${NF_VERSION}/JetBrainsMono.tar.xz" \
+    -o /tmp/JetBrainsMono.tar.xz
+  tar -xf /tmp/JetBrainsMono.tar.xz -C "$FONT_DIR"
+  rm -f /tmp/JetBrainsMono.tar.xz
+  fc-cache -fv
+  info "JetBrains Mono Nerd Font installed."
+else
+  info "JetBrains Mono Nerd Font already installed — skipping."
+fi
+
+# ── Starship prompt ──────────────────────────────────────────────────────────
+section "Starship"
+if ! command_exists starship; then
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
+  info "Starship installed."
+else
+  info "Starship $(starship --version) already installed — skipping."
+fi
 
 # Set oh-my-zsh plugins in .zshrc
 ZSHRC="$HOME/.zshrc"
@@ -58,31 +116,52 @@ fi
 
 # ── 2. PostgreSQL: initialise if needed ────────────────────────────────────────
 section "PostgreSQL"
-if ! sudo postgresql-setup --initdb 2>/dev/null; then
-  warn "PostgreSQL initdb skipped (already initialised?)"
+if systemctl is-active --quiet postgresql; then
+  info "PostgreSQL already running — skipping."
+else
+  if ! sudo postgresql-setup --initdb 2>/dev/null; then
+    warn "PostgreSQL initdb skipped (already initialised?)"
+  fi
+  sudo systemctl enable --now postgresql || warn "Failed to start PostgreSQL."
+  info "PostgreSQL setup done."
 fi
-sudo systemctl enable --now postgresql || warn "Failed to start PostgreSQL."
-info "PostgreSQL setup done."
 
 # ── 3. SDKMAN + Java (adoptium temurin LTS) ───────────────────────────────────
 section "SDKMAN"
 if [[ ! -d "$HOME/.sdkman" ]]; then
   curl -s "https://get.sdkman.io" | bash
+  info "SDKMAN installed."
+else
+  info "SDKMAN already installed — skipping."
 fi
 # shellcheck disable=SC1090
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk install java         # installs the default/latest LTS
-sdk install kotlin       # sdkman-managed kotlin as well (optional alongside dnf)
-info "SDKMAN + Java installed."
+
+if [[ ! -d "$HOME/.sdkman/candidates/java/current" ]]; then
+  sdk install java         # installs the default/latest LTS
+  info "Java (SDKMAN) installed."
+else
+  info "Java (SDKMAN) already installed — skipping."
+fi
+
+if [[ ! -d "$HOME/.sdkman/candidates/kotlin/current" ]]; then
+  sdk install kotlin
+  info "Kotlin (SDKMAN) installed."
+else
+  info "Kotlin (SDKMAN) already installed — skipping."
+fi
 
 # ── 4. Rust + cargo ────────────────────────────────────────────────────────────
 section "Rust"
 if ! command_exists rustup; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+  source "$HOME/.cargo/env"
+  rustup update stable
+  info "Rust $(rustc --version) installed."
+else
+  source "$HOME/.cargo/env" 2>/dev/null || true
+  info "Rust $(rustc --version) already installed — skipping."
 fi
-source "$HOME/.cargo/env"
-rustup update stable
-info "Rust $(rustc --version) installed."
 
 # ── 5. Leiningen (Clojure) ─────────────────────────────────────────────────────
 section "Leiningen (Clojure)"
@@ -93,8 +172,10 @@ if ! command_exists lein; then
   chmod +x "$HOME/.local/bin/lein"
   export PATH="$HOME/.local/bin:$PATH"
   lein version   # triggers self-install
+  info "Leiningen installed."
+else
+  info "Leiningen already installed — skipping."
 fi
-info "Leiningen installed."
 
 # ── 6. Babashka ────────────────────────────────────────────────────────────────
 section "Babashka"
@@ -104,8 +185,10 @@ if ! command_exists bb; then
   curl -fsSL "https://github.com/babashka/babashka/releases/download/v${BB_VERSION}/babashka-${BB_VERSION}-linux-amd64.tar.gz" \
     | tar -xz -C "$HOME/.local/bin"
   chmod +x "$HOME/.local/bin/bb"
+  info "Babashka $(bb --version) installed."
+else
+  info "Babashka $(bb --version) already installed — skipping."
 fi
-info "Babashka $(bb --version) installed."
 
 # ── 7. NVM + Node (latest LTS) ────────────────────────────────────────────────
 section "NVM + Node"
@@ -114,25 +197,40 @@ if [[ ! -d "$NVM_DIR" ]]; then
   NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest \
     | grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
   curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+  info "NVM installed."
+else
+  info "NVM already installed — skipping."
 fi
 # shellcheck disable=SC1090
 source "$NVM_DIR/nvm.sh"
-nvm install --lts
-nvm use --lts
-nvm alias default 'lts/*'
-info "Node $(node --version) / npm $(npm --version) installed."
+
+if ! command_exists node; then
+  nvm install --lts
+  nvm use --lts
+  nvm alias default 'lts/*'
+  info "Node $(node --version) / npm $(npm --version) installed."
+else
+  info "Node $(node --version) / npm $(npm --version) already installed — skipping."
+fi
 
 # ── 8. Vite (global) ──────────────────────────────────────────────────────────
 section "Vite"
-npm install -g vite
-info "Vite $(vite --version) installed."
+if ! command_exists vite; then
+  npm install -g vite
+  info "Vite installed."
+else
+  info "Vite already installed — skipping."
+fi
 
 # ── 9. GitHub Copilot CLI ─────────────────────────────────────────────────────
 section "GitHub Copilot CLI"
-npm install -g @githubnext/github-copilot-cli
-# Authenticate interactively after the script finishes — not automatable
-warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
-info "Copilot CLI installed."
+if ! command_exists github-copilot-cli; then
+  npm install -g @githubnext/github-copilot-cli
+  warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
+  info "Copilot CLI installed."
+else
+  info "GitHub Copilot CLI already installed — skipping."
+fi
 
 # ── 10. Slack (snap) ──────────────────────────────────────────────────────────
 section "Slack"
@@ -141,8 +239,13 @@ sudo systemctl enable --now snapd.socket || warn "Failed to enable snapd."
 if [[ ! -L /snap ]]; then
   sudo ln -sf /var/lib/snapd/snap /snap
 fi
-warn "A reboot (or re-login) may be required before snap works on Fedora."
-sudo snap install slack --classic || warn "Slack snap install failed — try again after reboot."
+if snap_installed slack; then
+  info "Slack already installed — skipping."
+else
+  warn "A reboot (or re-login) may be required before snap works on Fedora."
+  sudo snap install slack --classic || warn "Slack snap install failed — try again after reboot."
+  info "Slack installed."
+fi
 
 # ── 11. Chrome ────────────────────────────────────────────────────────────────
 section "Google Chrome"
@@ -151,28 +254,34 @@ if ! command_exists google-chrome; then
     sudo dnf config-manager addrepo \
       --from-repofile=https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome.repo
   sudo dnf install -y google-chrome-stable
+  info "Chrome installed."
+else
+  info "Chrome already installed — skipping."
 fi
-info "Chrome installed."
 
 # ── 12. Postman ───────────────────────────────────────────────────────────────
 section "Postman"
-if ! command_exists postman; then
+if snap_installed postman || command_exists postman; then
+  info "Postman already installed — skipping."
+else
   sudo snap install postman || warn "Postman snap install failed — try again after reboot."
+  info "Postman installed."
 fi
-info "Postman installed."
 
 # ── LazyVim ──────────────────────────────────────────────────────────────────
 section "LazyVim"
-# Back up existing Neovim config, then clone the LazyVim starter
-if [[ ! -d "$HOME/.config/nvim/.git" ]] || \
-   ! grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
+if [[ -d "$HOME/.config/nvim" ]] && \
+   grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
+  info "LazyVim already installed — skipping."
+else
+  # Back up existing Neovim config, then clone the LazyVim starter
   for d in "$HOME/.config/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"; do
     [[ -d "$d" ]] && mv "$d" "${d}.bak.$(date +%s)"
   done
   git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
   rm -rf "$HOME/.config/nvim/.git"
+  info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 fi
-info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 
 # ── PATH additions to shell rc ────────────────────────────────────────────────
 section "Shell profile updates"
