@@ -135,7 +135,9 @@ else
   info "SDKMAN already installed — skipping."
 fi
 # shellcheck disable=SC1090
-set +u; source "$HOME/.sdkman/bin/sdkman-init.sh"; set -u
+# SDKMAN scripts are not compatible with set -u (unbound variables)
+set +u
+source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 if [[ ! -d "$HOME/.sdkman/candidates/java/current" ]]; then
   sdk install java         # installs the default/latest LTS
@@ -150,6 +152,7 @@ if [[ ! -d "$HOME/.sdkman/candidates/kotlin/current" ]]; then
 else
   info "Kotlin (SDKMAN) already installed — skipping."
 fi
+set -u
 
 # ── 4. Rust + cargo (via rustup — https://rust-lang.org/tools/install) ─────────
 section "Rust"
