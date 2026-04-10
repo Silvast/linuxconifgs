@@ -151,15 +151,14 @@ else
   info "Kotlin (SDKMAN) already installed — skipping."
 fi
 
-# ── 4. Rust + cargo ────────────────────────────────────────────────────────────
+# ── 4. Rust + cargo (via rustup — https://rust-lang.org/tools/install) ─────────
 section "Rust"
 if ! command_exists rustup; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-  source "$HOME/.cargo/env"
-  rustup update stable
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  export PATH="$HOME/.cargo/bin:$PATH"
   info "Rust $(rustc --version) installed."
 else
-  source "$HOME/.cargo/env" 2>/dev/null || true
+  export PATH="$HOME/.cargo/bin:$PATH"
   info "Rust $(rustc --version) already installed — skipping."
 fi
 
