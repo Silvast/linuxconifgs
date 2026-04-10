@@ -231,7 +231,7 @@ fi
 section "GitHub Copilot CLI"
 if ! command_exists github-copilot-cli; then
   npm install -g @github/copilot
-  warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
+  warn "Run 'github-copilot auth' after this script to authenticate with GitHub."
   info "Copilot CLI installed."
 else
   info "GitHub Copilot CLI already installed — skipping."
@@ -309,8 +309,8 @@ section "All done 🎉"
 cat <<'EOF'
 
 Next steps:
-  1. Run `source ~/.bashrc` (or open a new terminal) to reload PATH.
-  2. Run `github-copilot-cli auth` to authenticate Copilot CLI with GitHub.
+  1. Open a new terminal (or run `source ~/.zshrc`) to reload PATH.
+  2. Run `github-copilot auth` to authenticate Copilot CLI with GitHub.
   3. If Slack/Postman (snap) failed, reboot first, then re-run those snap lines.
   4. `sdk list java` to see and install other JDK versions via SDKMAN.
 

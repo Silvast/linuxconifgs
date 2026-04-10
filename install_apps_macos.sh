@@ -220,7 +220,7 @@ fi
 section "GitHub Copilot CLI"
 if ! command_exists github-copilot-cli; then
   npm install -g @github/copilot
-  warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
+  warn "Run 'github-copilot auth' after this script to authenticate with GitHub."
   info "Copilot CLI installed."
 else
   info "GitHub Copilot CLI already installed — skipping."
@@ -292,7 +292,7 @@ cat <<'EOF'
 
 Next steps:
   1. Open a new terminal to reload PATH.
-  2. Run `github-copilot-cli auth` to authenticate Copilot CLI with GitHub.
+  2. Run `github-copilot auth` to authenticate Copilot CLI with GitHub.
   3. `sdk list java` to see and install other JDK versions via SDKMAN.
 
 EOF
