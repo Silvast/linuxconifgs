@@ -26,7 +26,6 @@ DNF_PACKAGES=(
   zsh
   git curl wget unzip zip tar
   java-21-openjdk java-21-openjdk-devel
-  kotlin
   python3 python3-pip
   sqlite
   postgresql postgresql-server postgresql-contrib
@@ -119,8 +118,12 @@ section "PostgreSQL"
 if systemctl is-active --quiet postgresql; then
   info "PostgreSQL already running — skipping."
 else
-  if ! sudo postgresql-setup --initdb 2>/dev/null; then
-    warn "PostgreSQL initdb skipped (already initialised?)"
+  if command -v postgresql-setup &>/dev/null; then
+    sudo postgresql-setup --initdb 2>/dev/null || warn "PostgreSQL initdb skipped (already initialised?)"
+  elif [[ -x /usr/libexec/postgresql-setup ]]; then
+    sudo /usr/libexec/postgresql-setup initdb 2>/dev/null || warn "PostgreSQL initdb skipped (already initialised?)"
+  else
+    warn "postgresql-setup not found — skipping initdb."
   fi
   sudo systemctl enable --now postgresql || warn "Failed to start PostgreSQL."
   info "PostgreSQL setup done."
@@ -227,7 +230,7 @@ fi
 # ── 9. GitHub Copilot CLI ─────────────────────────────────────────────────────
 section "GitHub Copilot CLI"
 if ! command_exists github-copilot-cli; then
-  npm install -g @githubnext/github-copilot-cli
+  npm install -g @github/copilot
   warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
   info "Copilot CLI installed."
 else

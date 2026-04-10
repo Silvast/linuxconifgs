@@ -31,7 +31,6 @@ section "System packages via brew"
 BREW_PACKAGES=(
   git curl wget unzip zip
   openjdk@21
-  kotlin
   python@3
   sqlite
   postgresql@17
@@ -220,7 +219,7 @@ fi
 # ── 11. GitHub Copilot CLI ──────────────────────────────────────────────────
 section "GitHub Copilot CLI"
 if ! command_exists github-copilot-cli; then
-  npm install -g @githubnext/github-copilot-cli
+  npm install -g @github/copilot
   warn "Run 'github-copilot-cli auth' after this script to authenticate with GitHub."
   info "Copilot CLI installed."
 else
