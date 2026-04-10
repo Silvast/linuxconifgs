@@ -135,7 +135,7 @@ else
   info "SDKMAN already installed — skipping."
 fi
 # shellcheck disable=SC1090
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+set +u; source "$HOME/.sdkman/bin/sdkman-init.sh"; set -u
 
 if [[ ! -d "$HOME/.sdkman/candidates/java/current" ]]; then
   sdk install java         # installs the default/latest LTS
@@ -201,7 +201,7 @@ else
   info "NVM already installed — skipping."
 fi
 # shellcheck disable=SC1090
-source "$NVM_DIR/nvm.sh"
+set +u; source "$NVM_DIR/nvm.sh"; set -u
 
 if ! command_exists node; then
   nvm install --lts
