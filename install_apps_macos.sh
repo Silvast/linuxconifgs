@@ -150,7 +150,7 @@ fi
 
 # ── 6. Rust + cargo (via rustup — https://rust-lang.org/tools/install) ──────
 section "Rust"
-if ! command_exists rustup; then
+if [[ ! -x "$HOME/.cargo/bin/cargo" ]]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   export PATH="$HOME/.cargo/bin:$PATH"
   info "Rust $(rustc --version) installed."
