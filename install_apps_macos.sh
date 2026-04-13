@@ -267,6 +267,24 @@ else
   info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 fi
 
+# ── Ollama ───────────────────────────────────────────────────────────────────
+section "Ollama"
+if ! command_exists ollama; then
+  curl -fsSL https://ollama.com/install.sh | sh
+  info "Ollama installed."
+else
+  info "Ollama $(ollama --version) already installed — skipping."
+fi
+
+# ── Opencode ─────────────────────────────────────────────────────────────────
+section "Opencode"
+if ! command_exists opencode; then
+  curl -fsSL https://opencode.ai/install | bash
+  info "Opencode installed."
+else
+  info "Opencode already installed — skipping."
+fi
+
 # ── PATH additions to shell rc ───────────────────────────────────────────────
 section "Shell profile updates"
 SHELL_RC="$HOME/.zshrc"
@@ -294,5 +312,7 @@ Next steps:
   1. Open a new terminal to reload PATH.
   2. Run `github-copilot auth` to authenticate Copilot CLI with GitHub.
   3. `sdk list java` to see and install other JDK versions via SDKMAN.
+  4. Run `ollama pull <model>` to download a model (e.g. ollama pull llama3).
+  5. Run `opencode` to start Opencode.
 
 EOF

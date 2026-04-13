@@ -30,7 +30,7 @@ DNF_PACKAGES=(
   sqlite
   postgresql postgresql-server postgresql-contrib
   vim kitty
-  neovim ripgrep fd-find lazygit
+  neovim ripgrep fd-find
   gcc gcc-c++ make
   dnf-plugins-core
 )
@@ -297,6 +297,34 @@ else
   info "LazyVim starter config installed. Run 'nvim' to finish plugin setup."
 fi
 
+# ── Lazygit ──────────────────────────────────────────────────────────────────
+section "Lazygit"
+if ! command_exists lazygit; then
+  sudo dnf copr enable -y dejan/lazygit
+  sudo dnf install -y lazygit
+  info "Lazygit installed."
+else
+  info "Lazygit already installed — skipping."
+fi
+
+# ── Ollama ────────────────────────────────────────────────────────────────────
+section "Ollama"
+if ! command_exists ollama; then
+  curl -fsSL https://ollama.com/install.sh | sh
+  info "Ollama installed."
+else
+  info "Ollama $(ollama --version) already installed — skipping."
+fi
+
+# ── Opencode ──────────────────────────────────────────────────────────────────
+section "Opencode"
+if ! command_exists opencode; then
+  curl -fsSL https://opencode.ai/install | bash
+  info "Opencode installed."
+else
+  info "Opencode already installed — skipping."
+fi
+
 # ── PATH additions to shell rc ────────────────────────────────────────────────
 section "Shell profile updates"
 SHELL_RC="$HOME/.bashrc"
@@ -322,5 +350,7 @@ Next steps:
   2. Run `github-copilot auth` to authenticate Copilot CLI with GitHub.
   3. If Slack/Postman (snap) failed, reboot first, then re-run those snap lines.
   4. `sdk list java` to see and install other JDK versions via SDKMAN.
+  5. Run `ollama pull <model>` to download a model (e.g. ollama pull llama3).
+  6. Run `opencode` to start Opencode.
 
 EOF
