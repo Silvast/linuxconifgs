@@ -320,6 +320,13 @@ fi
 section "Opencode"
 if ! command_exists opencode; then
   curl -fsSL https://opencode.ai/install | bash
+  # The installer writes to ~/.bashrc; mirror any opencode lines into ~/.zshrc
+  if grep -q "opencode" "$HOME/.bashrc" 2>/dev/null; then
+    while IFS= read -r line; do
+      grep -qF "$line" "$HOME/.zshrc" 2>/dev/null || echo "$line" >> "$HOME/.zshrc"
+    done < <(grep "opencode" "$HOME/.bashrc")
+    info "Opencode PATH added to .zshrc"
+  fi
   info "Opencode installed."
 else
   info "Opencode already installed — skipping."
