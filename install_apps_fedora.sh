@@ -32,7 +32,6 @@ DNF_PACKAGES=(
   vim kitty
   neovim ripgrep fd-find lazygit
   gcc gcc-c++ make
-  snapd
   dnf-plugins-core
 )
 
@@ -47,7 +46,8 @@ done
 
 if (( ${#MISSING[@]} > 0 )); then
   info "Installing: ${MISSING[*]}"
-  sudo dnf install -y "${MISSING[@]}"
+  sudo dnf install -y --skip-unavailable "${MISSING[@]}" \
+    || warn "dnf exited non-zero — some packages may not have installed."
 else
   info "All system packages already installed."
 fi
@@ -239,6 +239,15 @@ fi
 
 # ── 10. Slack (snap) ──────────────────────────────────────────────────────────
 section "Slack"
+# snapd is not in Fedora's default repos — install via dnf if missing
+if ! rpm_installed snapd; then
+  sudo dnf install -y snapd || {
+    warn "snapd not in default repos. Installing via COPR..."
+    sudo dnf copr enable -y nickavem/snapd 2>/dev/null \
+      && sudo dnf install -y snapd \
+      || warn "snapd install failed — Slack/Postman snaps will not work."
+  }
+fi
 sudo systemctl enable --now snapd.socket || warn "Failed to enable snapd."
 # SELinux symlink needed on Fedora
 if [[ ! -L /snap ]]; then
