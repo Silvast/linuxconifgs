@@ -2,22 +2,28 @@
 set -uo pipefail
 
 # ── colours ────────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()    { echo -e "${GREEN}[INFO]${NC}  $*"; }
-warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+info() { echo -e "${GREEN}[INFO]${NC}  $*"; }
+warn() { echo -e "${YELLOW}[WARN]${NC}  $*"; }
 section() { echo -e "\n${GREEN}══ $* ══${NC}"; }
 
 # ── sudo: authenticate once, keep alive ────────────────────────────────────────
 info "Requesting sudo — you will only be asked once."
 sudo -v
 # Refresh the sudo timestamp in the background for the duration of the script
-( while true; do sudo -n true; sleep 50; done ) &
+(while true; do
+  sudo -n true
+  sleep 50
+done) &
 SUDO_KEEPER_PID=$!
 trap 'kill $SUDO_KEEPER_PID 2>/dev/null' EXIT
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 command_exists() { command -v "$1" &>/dev/null; }
-rpm_installed()  { rpm -q "$1" &>/dev/null; }
+rpm_installed() { rpm -q "$1" &>/dev/null; }
 snap_installed() { snap list "$1" &>/dev/null 2>&1; }
 
 # ── 1. System packages (dnf — install only missing) ───────────────────────────
@@ -44,17 +50,17 @@ for pkg in "${DNF_PACKAGES[@]}"; do
   fi
 done
 
-if (( ${#MISSING[@]} > 0 )); then
+if ((${#MISSING[@]} > 0)); then
   info "Installing: ${MISSING[*]}"
-  sudo dnf install -y --skip-unavailable "${MISSING[@]}" \
-    || warn "dnf exited non-zero — some packages may not have installed."
+  sudo dnf install -y --skip-unavailable "${MISSING[@]}" ||
+    warn "dnf exited non-zero — some packages may not have installed."
 else
   info "All system packages already installed."
 fi
 
 # ── Oh My Zsh ────────────────────────────────────────────────────────────────
 section "Oh My Zsh"
-hash -r  # refresh command lookup after dnf install
+hash -r # refresh command lookup after dnf install
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
   ZSH= sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
   info "Oh My Zsh installed."
@@ -86,8 +92,8 @@ section "Nerd Font (JetBrains Mono)"
 FONT_DIR="$HOME/.local/share/fonts"
 if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   mkdir -p "$FONT_DIR"
-  NF_VERSION=$(curl -s https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest \
-    | grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
+  NF_VERSION=$(curl -s https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest |
+    grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
   curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/${NF_VERSION}/JetBrainsMono.tar.xz" \
     -o /tmp/JetBrainsMono.tar.xz
   tar -xf /tmp/JetBrainsMono.tar.xz -C "$FONT_DIR"
@@ -143,7 +149,7 @@ set +u
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 if [[ ! -d "$HOME/.sdkman/candidates/java/current" ]]; then
-  sdk install java         # installs the default/latest LTS
+  sdk install java # installs the default/latest LTS
   info "Java (SDKMAN) installed."
 else
   info "Java (SDKMAN) already installed — skipping."
@@ -176,7 +182,7 @@ if ! command_exists lein; then
     -o "$HOME/.local/bin/lein"
   chmod +x "$HOME/.local/bin/lein"
   export PATH="$HOME/.local/bin:$PATH"
-  lein version   # triggers self-install
+  lein version # triggers self-install
   info "Leiningen installed."
 else
   info "Leiningen already installed — skipping."
@@ -185,10 +191,10 @@ fi
 # ── 6. Babashka ────────────────────────────────────────────────────────────────
 section "Babashka"
 if ! command_exists bb; then
-  BB_VERSION=$(curl -s https://api.github.com/repos/babashka/babashka/releases/latest \
-    | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
-  curl -fsSL "https://github.com/babashka/babashka/releases/download/v${BB_VERSION}/babashka-${BB_VERSION}-linux-amd64.tar.gz" \
-    | tar -xz -C "$HOME/.local/bin"
+  BB_VERSION=$(curl -s https://api.github.com/repos/babashka/babashka/releases/latest |
+    grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+  curl -fsSL "https://github.com/babashka/babashka/releases/download/v${BB_VERSION}/babashka-${BB_VERSION}-linux-amd64.tar.gz" |
+    tar -xz -C "$HOME/.local/bin"
   chmod +x "$HOME/.local/bin/bb"
   info "Babashka $(bb --version) installed."
 else
@@ -199,23 +205,26 @@ fi
 section "NVM + Node"
 export NVM_DIR="$HOME/.nvm"
 if [[ ! -d "$NVM_DIR" ]]; then
-  NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest \
-    | grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
+  NVM_VERSION=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest |
+    grep '"tag_name"' | sed 's/.*"\(v[^"]*\)".*/\1/')
   curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
   info "NVM installed."
 else
   info "NVM already installed — skipping."
 fi
 # shellcheck disable=SC1090
-set +u; source "$NVM_DIR/nvm.sh"; set -u
+set +u
+source "$NVM_DIR/nvm.sh"
+set -u
 
-if ! command_exists node; then
+if ! nvm ls --no-colors 2>/dev/null | grep -q 'lts/\|v[0-9]'; then
   nvm install --lts
   nvm use --lts
   nvm alias default 'lts/*'
   info "Node $(node --version) / npm $(npm --version) installed."
 else
-  info "Node $(node --version) / npm $(npm --version) already installed — skipping."
+  nvm use --lts 2>/dev/null || nvm use default
+  info "Node $(node --version) / npm $(npm --version) already installed via nvm — skipping."
 fi
 
 # ── 8. Vite (global) ──────────────────────────────────────────────────────────
@@ -243,9 +252,9 @@ section "Slack"
 if ! rpm_installed snapd; then
   sudo dnf install -y snapd || {
     warn "snapd not in default repos. Installing via COPR..."
-    sudo dnf copr enable -y nickavem/snapd 2>/dev/null \
-      && sudo dnf install -y snapd \
-      || warn "snapd install failed — Slack/Postman snaps will not work."
+    sudo dnf copr enable -y nickavem/snapd 2>/dev/null &&
+      sudo dnf install -y snapd ||
+      warn "snapd install failed — Slack/Postman snaps will not work."
   }
 fi
 sudo systemctl enable --now snapd.socket || warn "Failed to enable snapd."
@@ -264,7 +273,7 @@ fi
 # ── 11. Chrome ────────────────────────────────────────────────────────────────
 section "Google Chrome"
 if ! command_exists google-chrome; then
-  sudo dnf config-manager --set-enabled google-chrome 2>/dev/null || \
+  sudo dnf config-manager --set-enabled google-chrome 2>/dev/null ||
     sudo dnf config-manager addrepo \
       --from-repofile=https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome.repo
   sudo dnf install -y google-chrome-stable
@@ -284,8 +293,8 @@ fi
 
 # ── LazyVim ──────────────────────────────────────────────────────────────────
 section "LazyVim"
-if [[ -d "$HOME/.config/nvim" ]] && \
-   grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
+if [[ -d "$HOME/.config/nvim" ]] &&
+  grep -q "LazyVim" "$HOME/.config/nvim/lua/config/lazy.lua" 2>/dev/null; then
   info "LazyVim already installed — skipping."
 else
   # Back up existing Neovim config, then clone the LazyVim starter
@@ -323,7 +332,7 @@ if ! command_exists opencode; then
   # The installer writes to ~/.bashrc; mirror any opencode lines into ~/.zshrc
   if grep -q "opencode" "$HOME/.bashrc" 2>/dev/null; then
     while IFS= read -r line; do
-      grep -qF "$line" "$HOME/.zshrc" 2>/dev/null || echo "$line" >> "$HOME/.zshrc"
+      grep -qF "$line" "$HOME/.zshrc" 2>/dev/null || echo "$line" >>"$HOME/.zshrc"
     done < <(grep "opencode" "$HOME/.bashrc")
     info "Opencode PATH added to .zshrc"
   fi
@@ -338,7 +347,7 @@ SHELL_RC="$HOME/.bashrc"
 [[ "$SHELL" == */zsh ]] && SHELL_RC="$HOME/.zshrc"
 
 add_to_rc() {
-  grep -qF "$1" "$SHELL_RC" || echo "$1" >> "$SHELL_RC"
+  grep -qF "$1" "$SHELL_RC" || echo "$1" >>"$SHELL_RC"
 }
 
 add_to_rc 'export PATH="$HOME/.local/bin:$PATH"'

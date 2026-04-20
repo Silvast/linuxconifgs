@@ -198,13 +198,14 @@ fi
 # shellcheck disable=SC1090
 set +u; source "$NVM_DIR/nvm.sh"; set -u
 
-if ! command_exists node; then
+if ! nvm ls --no-colors 2>/dev/null | grep -q 'lts/\|v[0-9]'; then
   nvm install --lts
   nvm use --lts
   nvm alias default 'lts/*'
   info "Node $(node --version) / npm $(npm --version) installed."
 else
-  info "Node $(node --version) / npm $(npm --version) already installed — skipping."
+  nvm use --lts 2>/dev/null || nvm use default
+  info "Node $(node --version) / npm $(npm --version) already installed via nvm — skipping."
 fi
 
 # ── 10. Vite (global) ───────────────────────────────────────────────────────
